@@ -5,6 +5,7 @@ import com.fontolan.spring.google.auth.domains.User;
 import com.fontolan.spring.google.auth.controllers.request.TokenRequest;
 import com.fontolan.spring.google.auth.repositories.UserRepository;
 import com.fontolan.spring.google.auth.services.GoogleTokenService;
+import com.fontolan.spring.google.auth.services.JwtTokenService;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,11 +17,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/auth")
 public class AuthController {
     private final GoogleTokenService googleTokenService;
-
+    private final JwtTokenService jwtTokenService;
     private final UserRepository userRepository;
 
-    public AuthController(GoogleTokenService googleTokenService, UserRepository userRepository) {
+    public AuthController(GoogleTokenService googleTokenService, JwtTokenService jwtTokenService, UserRepository userRepository) {
         this.googleTokenService = googleTokenService;
+        this.jwtTokenService = jwtTokenService;
         this.userRepository = userRepository;
     }
 
@@ -46,8 +48,7 @@ public class AuthController {
                     userRepository.save(user);
                 }
 
-                // Gere um JWT para autenticação (ou outro mecanismo de autenticação)
-                String jwtToken = generateJwtToken(user); // Implemente este método
+                String jwtToken = jwtTokenService.generateJwtToken(user);
 
                 return ResponseEntity.ok(new AuthResponse(jwtToken));
             } else {
