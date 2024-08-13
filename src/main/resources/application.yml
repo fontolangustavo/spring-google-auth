@@ -9,3 +9,16 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
+
+# JWT
+jwt:
+  expires-in: 300
+  private:
+    key: classpath:config/app.key
+  public:
+    key: classpath:config/public.key
+
+# Google
+google:
+  client:
+    id: ${GOOGLE_CLIENT_ID}

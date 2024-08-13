@@ -1,8 +1,8 @@
 package com.fontolan.spring.google.auth.controllers;
 
+import com.fontolan.spring.google.auth.controllers.request.TokenRequest;
 import com.fontolan.spring.google.auth.controllers.response.AuthResponse;
 import com.fontolan.spring.google.auth.domains.User;
-import com.fontolan.spring.google.auth.controllers.request.TokenRequest;
 import com.fontolan.spring.google.auth.repositories.UserRepository;
 import com.fontolan.spring.google.auth.services.GoogleTokenService;
 import com.fontolan.spring.google.auth.services.JwtTokenService;
@@ -27,35 +27,31 @@ public class AuthController {
     }
 
     @PostMapping("/google")
-    public ResponseEntity<AuthResponse> googleLogin(@RequestBody TokenRequest tokenRequest) {
-        try {
-            GoogleIdToken idToken = googleTokenService.verifyToken(tokenRequest.getToken());
-            if (idToken != null) {
-                GoogleIdToken.Payload payload = idToken.getPayload();
+    public ResponseEntity<AuthResponse> googleLogin(@RequestBody TokenRequest tokenRequest) throws Exception {
+        GoogleIdToken idToken = googleTokenService.verifyToken(tokenRequest.getToken());
+        if (idToken != null) {
+            GoogleIdToken.Payload payload = idToken.getPayload();
 
-                String googleId = payload.getSubject();
-                String email = payload.getEmail();
-                String name = (String) payload.get("name");
+            String googleId = payload.getSubject();
+            String email = payload.getEmail();
+            String name = (String) payload.get("name");
 
-                User user = userRepository.findByEmail(email);
-                if (user == null) {
-                    user = User.builder()
-                        .googleId(googleId)
-                        .email(email)
-                        .name(name)
-                        .build();
+            User user = userRepository.findByEmail(email);
+            if (user == null) {
+                user = User.builder()
+                    .googleId(googleId)
+                    .email(email)
+                    .name(name)
+                    .build();
 
-                    userRepository.save(user);
-                }
-
-                String jwtToken = jwtTokenService.generateJwtToken(user);
-
-                return ResponseEntity.ok(new AuthResponse(jwtToken));
-            } else {
-                throw new RuntimeException("Invalid Google token");
+                userRepository.save(user);
             }
-        } catch (Exception e) {
-            throw new RuntimeException("An error occurred while verifying Google token");
+
+            String jwtToken = jwtTokenService.generateJwtToken(user);
+
+            return ResponseEntity.ok(new AuthResponse(jwtToken));
+        } else {
+            throw new RuntimeException("Invalid Google token");
         }
     }
 }

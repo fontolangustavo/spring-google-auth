@@ -3,23 +3,33 @@ package com.fontolan.spring.google.auth.services;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 
 @Service
 public class GoogleTokenService {
-    private static final String CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID";
+    @Value("${google.client.id}")
+    private String clientId;
+    private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
     public GoogleIdToken verifyToken(String idTokenString) throws Exception {
         GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
                 GoogleNetHttpTransport.newTrustedTransport(),
-                GsonFactory.getDefaultInstance()
-        )
-                .setAudience(Collections.singletonList(CLIENT_ID))
-                .build();
+                JSON_FACTORY
+            )
+            .setAudience(Collections.singletonList(clientId))
+            .build();
 
-        return verifier.verify(idTokenString);
+        GoogleIdToken idToken = verifier.verify(idTokenString);
+
+        if (idToken != null) {
+            return idToken;
+        } else {
+            throw new Exception("Token ID inválido ou não pôde ser verificado.");
+        }
     }
 }

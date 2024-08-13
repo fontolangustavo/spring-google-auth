@@ -1,47 +1,34 @@
 package com.fontolan.spring.google.auth.services;
 
 import com.fontolan.spring.google.auth.domains.User;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.oauth2.jwt.JwtClaimsSet;
+import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
-import java.security.Key;
-import java.util.Date;
+import java.time.Instant;
 
 @Service
 public class JwtTokenService {
-    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private final JwtEncoder jwtEncoder;
+    @Value("${jwt.expires-in}")
+    private long expiresIn;
+
+    public JwtTokenService(JwtEncoder jwtEncoder) {
+        this.jwtEncoder = jwtEncoder;
+    }
 
     public String generateJwtToken(User user) {
-        Date now = new Date();
+        Instant now = Instant.now();
 
-        long validityInMilliseconds = 3600000;
-        Date validity = new Date(now.getTime() + validityInMilliseconds);
+        JwtClaimsSet claim = JwtClaimsSet.builder()
+                .issuer("google-auth-app")
+                .subject(user.getId().toString())
+                .issuedAt(now)
+                .expiresAt(now.plusSeconds(expiresIn))
+                .build();
 
-        return Jwts.builder()
-                .setSubject(user.getEmail())
-                .setIssuedAt(now)
-                .setExpiration(validity)
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
-    }
-
-    public boolean validateToken(String token) {
-        try {
-            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    public String getEmail(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+        return  jwtEncoder.encode(JwtEncoderParameters.from(claim)).getTokenValue();
     }
 }
