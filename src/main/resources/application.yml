@@ -1,3 +1,11 @@
 spring:
   application:
     name: spring-google-auth
+  datasource:
+    url: jdbc:postgresql://localhost:5432/google-auth
+    username: username
+    password: myp4ssw0rd
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
